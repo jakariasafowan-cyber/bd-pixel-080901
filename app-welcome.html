@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>DFTV - FREE</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans Bengali', sans-serif;
+      background: #06060e;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+      animation: fadeIn 0.8s ease-out;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .logo {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 20px;
+      background: #d34127;
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 50px;
+      box-shadow: 0 8px 32px rgba(211, 65, 39, 0.4);
+    }
+    
+    h1 {
+      font-size: 32px;
+      color: #ffffff;
+      margin-bottom: 8px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    
+    .free-badge {
+      display: inline-block;
+      background: #00d474;
+      color: #06060e;
+      padding: 6px 20px;
+      border-radius: 20px;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 32px;
+      box-shadow: 0 4px 16px rgba(0, 212, 116, 0.3);
+    }
+    
+    .subtitle {
+      font-size: 16px;
+      color: #888;
+      margin-bottom: 40px;
+    }
+    
+    .lang-selector {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .lang-btn {
+      width: 100%;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .lang-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+    
+    .lang-btn:active {
+      transform: translateY(0);
+    }
+    
+    .lang-btn.primary {
+      background: #d34127;
+      border-color: #d34127;
+      box-shadow: 0 8px 24px rgba(211, 65, 39, 0.4);
+    }
+    
+    .lang-btn.primary:hover {
+      background: #e84d2f;
+      border-color: #e84d2f;
+      transform: translateY(-2px);
+    }
+    
+    .lang-flag {
+      font-size: 28px;
+      margin-right: 12px;
+      vertical-align: middle;
+    }
+    
+    .loading {
+      display: none;
+      margin-top: 24px;
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .loading.show {
+      display: block;
+    }
+    
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #666;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <!-- 
+  ╔═══════════════════════════════════════════════════════════════════════════╗
+  ║                    🔧 EASY CONFIGURATION SECTION 🔧                        ║
+  ║                      在这里修改像素ID和跳转地址                              ║
+  ╚═══════════════════════════════════════════════════════════════════════════╝
+  -->
+  <script>
+  // ============================================================
+  // 📱 Facebook Pixel ID - 修改这里的像素ID
+  // ============================================================
+  var FACEBOOK_PIXEL_ID = '1332039895717687';
+  
+  // ============================================================
+  // 🎯 Final Destination URL - 修改这里的最终跳转地址
+  // ============================================================
+  var FINAL_URL = 'https://mayapsst.site/';
+  
+  // ============================================================
+  // ⚠️ 以下代码请勿修改 / DO NOT EDIT BELOW THIS LINE ⚠️
+  // ============================================================
+  </script>
+
+  <!-- Meta Pixel Code -->
+  <script>
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+  n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s)}(window, document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+  
+  // 初始化像素
+  fbq('init', FACEBOOK_PIXEL_ID);
+  
+  // 追踪页面浏览
+  fbq('track', 'PageView');
+  
+  // 保存到localStorage，模拟cookie行为
+  try {
+    localStorage.setItem('fb_pixel_id', FACEBOOK_PIXEL_ID);
+    localStorage.setItem('app_opened_time', new Date().toISOString());
+  } catch(e) {
+    console.log('localStorage not available');
+  }
+  
+  // 动态创建noscript标签，使用配置的像素ID
+  document.write('<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=' + FACEBOOK_PIXEL_ID + '&ev=PageView&noscript=1"/></noscript>');
+  </script>
+  <!-- End Meta Pixel Code -->
+
+  <div class="container">
+    <div class="logo">📺</div>
+    <h1>DFTV</h1>
+    <div class="free-badge">100% FREE</div>
+    <div class="subtitle">Choose your language<br>আপনার ভাষা চয়ন করুন</div>
+    
+    <div class="lang-selector">
+      <button class="lang-btn primary" onclick="handleLanguageSelect('bn')" id="btnBengali">
+        <span class="lang-flag">🇧🇩</span>
+        বাংলা (Bengali)
+      </button>
+      
+      <button class="lang-btn" onclick="handleLanguageSelect('en')" id="btnEnglish">
+        <span class="lang-flag">🇬🇧</span>
+        English
+      </button>
+    </div>
+    
+    <div class="loading" id="loadingMsg">
+      <span class="spinner"></span>
+      Loading...
+    </div>
+  </div>
+
+  <script>
+    // 语言选择处理
+    function handleLanguageSelect(lang) {
+      var btnBengali = document.getElementById('btnBengali');
+      var btnEnglish = document.getElementById('btnEnglish');
+      var loadingMsg = document.getElementById('loadingMsg');
+      
+      // 禁用按钮，防止重复点击
+      btnBengali.disabled = true;
+      btnEnglish.disabled = true;
+      btnBengali.style.opacity = '0.5';
+      btnEnglish.style.opacity = '0.5';
+      
+      // 显示加载提示
+      loadingMsg.className = 'loading show';
+      
+      try {
+        // 保存选择的语言
+        localStorage.setItem('selected_language', lang);
+        
+        // 触发购物事件 - 这是关键！
+        fbq('track', 'Purchase', {
+          content_name: 'DFTV App Language Selected',
+          content_type: 'product',
+          content_category: 'app_activation'
+        });
+        
+        // 保存购物事件触发记录
+        localStorage.setItem('purchase_tracked', 'true');
+        localStorage.setItem('purchase_time', new Date().toISOString());
+        
+        console.log('Purchase event tracked: Language=' + lang);
+      } catch(e) {
+        console.error('Error tracking purchase:', e);
+      }
+      
+      // 延迟跳转，确保像素事件发送成功
+      setTimeout(function() {
+        // 跳转到最终页面（带语言参数）
+        var finalUrl = FINAL_URL;
+        if (finalUrl.indexOf('?') > -1) {
+          finalUrl += '&lang=' + lang;
+        } else {
+          finalUrl += '?lang=' + lang;
+        }
+        window.location.href = finalUrl;
+      }, 1500);
+    }
+    
+    // 防止用户已经触发过购物事件，可以选择直接跳转
+    try {
+      if (localStorage.getItem('purchase_tracked') === 'true') {
+        // 如果需要，可以取消注释以下行，让用户直接跳转
+        // window.location.href = FINAL_URL;
+      }
+    } catch(e) {
+      console.log('localStorage check failed');
+    }
+  </script>
+</body>
+</html>
