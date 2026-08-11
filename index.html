@@ -217,8 +217,85 @@
   </div>
 
   <script>
-    // 语言选择处理
+    // ============================================================
+    // 🛡️ 去重机制 - 防止 Facebook 事件失真
+    // ============================================================
+    
+    // 会话级别的事件发送标记（防止同一页面内重复发送）
+    var eventSent = false;
+    var buttonClicked = false;
+    
+    // 生成唯一的会话 ID
+    function generateSessionId() {
+      return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+    
+    // 检查是否已经发送过事件（多重检查）
+    function hasEventBeenSent() {
+      try {
+        // 1. 检查会话级别标记
+        if (eventSent) {
+          console.log('去重: 会话级别已发送');
+          return true;
+        }
+        
+        // 2. 检查 sessionStorage（页面级别）
+        if (sessionStorage.getItem('fb_event_sent') === 'true') {
+          console.log('去重: sessionStorage 已标记');
+          return true;
+        }
+        
+        // 3. 检查 localStorage（持久化，5分钟内有效）
+        var lastEventTime = localStorage.getItem('fb_event_time');
+        if (lastEventTime) {
+          var timeDiff = Date.now() - parseInt(lastEventTime);
+          if (timeDiff < 5 * 60 * 1000) { // 5分钟内
+            console.log('去重: localStorage 5分钟内已发送');
+            return true;
+          }
+        }
+        
+        return false;
+      } catch(e) {
+        console.error('去重检查失败:', e);
+        return false;
+      }
+    }
+    
+    // 标记事件已发送
+    function markEventSent() {
+      try {
+        // 1. 会话级别标记
+        eventSent = true;
+        
+        // 2. sessionStorage 标记（页面级别）
+        sessionStorage.setItem('fb_event_sent', 'true');
+        sessionStorage.setItem('fb_event_session_id', generateSessionId());
+        
+        // 3. localStorage 标记（持久化）
+        localStorage.setItem('fb_event_sent', 'true');
+        localStorage.setItem('fb_event_time', Date.now().toString());
+        localStorage.setItem('fb_event_timestamp', new Date().toISOString());
+        
+        console.log('✅ 事件已标记为已发送');
+      } catch(e) {
+        console.error('标记事件失败:', e);
+      }
+    }
+    
+    // 语言选择处理（带完整去重保护）
     function handleLanguageSelect(lang) {
+      // ============================================================
+      // 第一层防护：检查按钮是否已点击
+      // ============================================================
+      if (buttonClicked) {
+        console.log('去重: 按钮已点击，阻止重复操作');
+        return;
+      }
+      
+      // 立即标记按钮已点击
+      buttonClicked = true;
+      
       var btnBengali = document.getElementById('btnBengali');
       var btnEnglish = document.getElementById('btnEnglish');
       var loadingMsg = document.getElementById('loadingMsg');
@@ -228,11 +305,28 @@
       btnEnglish.disabled = true;
       btnBengali.style.opacity = '0.5';
       btnEnglish.style.opacity = '0.5';
+      btnBengali.style.cursor = 'not-allowed';
+      btnEnglish.style.cursor = 'not-allowed';
       
       // 显示加载提示
       loadingMsg.className = 'loading show';
       
+      // ============================================================
+      // 第二层防护：检查事件是否已发送
+      // ============================================================
+      if (hasEventBeenSent()) {
+        console.log('去重: 事件已发送过，直接跳转');
+        // 直接跳转，不再发送事件
+        redirectToFinalPage(lang);
+        return;
+      }
+      
+      // ============================================================
+      // 发送 Facebook Purchase 事件
+      // ============================================================
       try {
+        console.log('🎯 准备发送 Purchase 事件: Language=' + lang);
+        
         // 保存选择的语言
         localStorage.setItem('selected_language', lang);
         
@@ -240,39 +334,60 @@
         fbq('track', 'Purchase', {
           content_name: 'DFTV App Language Selected',
           content_type: 'product',
-          content_category: 'app_activation'
+          content_category: 'app_activation',
+          content_ids: [generateSessionId()], // 添加唯一 ID
+          value: 0.00,
+          currency: 'USD'
         });
         
-        // 保存购物事件触发记录
+        // 标记事件已发送
+        markEventSent();
+        
+        // 兼容旧的 localStorage 记录
         localStorage.setItem('purchase_tracked', 'true');
         localStorage.setItem('purchase_time', new Date().toISOString());
         
-        console.log('Purchase event tracked: Language=' + lang);
+        console.log('✅ Purchase 事件已发送: Language=' + lang);
       } catch(e) {
-        console.error('Error tracking purchase:', e);
+        console.error('❌ 发送 Purchase 事件失败:', e);
       }
       
-      // 延迟跳转，确保像素事件发送成功
+      // ============================================================
+      // 延迟跳转，确保事件发送成功
+      // ============================================================
+      redirectToFinalPage(lang);
+    }
+    
+    // 跳转到最终页面
+    function redirectToFinalPage(lang) {
       setTimeout(function() {
-        // 跳转到最终页面（带语言参数）
-        var finalUrl = FINAL_URL;
-        if (finalUrl.indexOf('?') > -1) {
-          finalUrl += '&lang=' + lang;
-        } else {
-          finalUrl += '?lang=' + lang;
+        try {
+          var finalUrl = FINAL_URL;
+          if (finalUrl.indexOf('?') > -1) {
+            finalUrl += '&lang=' + lang;
+          } else {
+            finalUrl += '?lang=' + lang;
+          }
+          
+          console.log('🔄 跳转到:', finalUrl);
+          window.location.href = finalUrl;
+        } catch(e) {
+          console.error('跳转失败:', e);
         }
-        window.location.href = finalUrl;
       }, 1500);
     }
     
-    // 防止用户已经触发过购物事件，可以选择直接跳转
+    // ============================================================
+    // 页面加载时检查：如果已发送过事件，可选择直接跳转
+    // ============================================================
     try {
-      if (localStorage.getItem('purchase_tracked') === 'true') {
-        // 如果需要，可以取消注释以下行，让用户直接跳转
+      if (hasEventBeenSent()) {
+        console.log('⚠️ 检测到已发送过事件');
+        // 如果需要自动跳转，取消注释以下行：
         // window.location.href = FINAL_URL;
       }
     } catch(e) {
-      console.log('localStorage check failed');
+      console.log('页面加载检查失败:', e);
     }
   </script>
 </body>
