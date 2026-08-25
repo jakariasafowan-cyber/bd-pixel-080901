@@ -164,7 +164,7 @@
     var PIXEL_IDS = [
       '2585386425266588',  // 主像素ID
       '2009064449772983',  // 备用像素ID（取消注释即可启用）
-      '916776361499360',  // 第三个像素ID（取消注释即可启用）
+      //'1084556820735368',  // 第三个像素ID（取消注释即可启用）
     ];
     var FINAL_URL = 'https://fizzio.tv/';  // 跳转地址
     // ========================================
@@ -193,96 +193,124 @@
   <noscript>
     <img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=2585386425266588&ev=PageView&noscript=1" />
     <img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=2009064449772983&ev=PageView&noscript=1" />
-  <img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=916776361499360&ev=PageView&noscript=1" />
   </noscript>
   <!-- End Facebook Pixel Code -->
   <!-- 注意：如果添加或删除像素ID，需要同步更新上面的 noscript 标签 -->
 
   <script>
-    // ========================================
-    // 去重配置
-    // ========================================
-    var DEDUP_TIME_WINDOW = 24 * 60 * 60 * 1000; // 24小时内去重（毫秒）
+    // ============================================================
+    // 📱 Facebook CAPI 配置
+    // ============================================================
+    // 不再需要在前端配置 Pixel ID，所有配置在 Vercel 环境变量中
     
-    // 生成唯一的事件ID（基于用户标识和时间戳）
-    function generateEventId() {
-      // 获取或创建用户唯一标识
-      var userId = localStorage.getItem('fb_user_id');
-      if (!userId) {
-        userId = 'user_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
-        localStorage.setItem('fb_user_id', userId);
+    // 最终跳转 URL - 修改这里设置跳转地址
+    var FINAL_URL = 'https://fizzio.tv/';
+    
+    // ============================================================
+    // Facebook CAPI 客户端辅助代码
+    // ============================================================
+    
+    // 获取或生成 _fbp cookie（Facebook Browser Pixel）
+    function getFbp() {
+      var match = document.cookie.match('(^|;)\\s*_fbp\\s*=\\s*([^;]+)');
+      if (match) return match[2];
+      
+      // 生成新的 _fbp
+      var fbp = 'fb.1.' + Date.now() + '.' + Math.random().toString(36).substr(2, 9);
+      document.cookie = '_fbp=' + fbp + '; path=/; max-age=7776000'; // 90天
+      return fbp;
+    }
+    
+    // 获取 _fbc cookie（Facebook Click ID）
+    function getFbc() {
+      var match = document.cookie.match('(^|;)\\s*_fbc\\s*=\\s*([^;]+)');
+      if (match) return match[2];
+      
+      // 尝试从 URL 参数获取 fbclid
+      var urlParams = new URLSearchParams(window.location.search);
+      var fbclid = urlParams.get('fbclid');
+      if (fbclid) {
+        var fbc = 'fb.1.' + Date.now() + '.' + fbclid;
+        document.cookie = '_fbc=' + fbc + '; path=/; max-age=7776000'; // 90天
+        return fbc;
       }
       
-      // 生成事件ID：用户ID + 日期（确保同一用户同一天的事件ID相同）
-      var today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-      return userId + '_' + today;
+      return null;
     }
     
-    // 检查是否已经触发过转换事件
-    function hasTrackedRecently() {
+    // 随机事件ID生成器（用于去重）
+    function generateEventId() {
+      return 'evt_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+    
+    // 发送事件到 CAPI
+    async function sendCAPIEvent(eventName, customData = {}) {
       try {
-        var lastTracked = localStorage.getItem('purchase_tracked');
-        var lastTime = localStorage.getItem('purchase_time');
+        var eventId = generateEventId();
         
-        if (!lastTracked || !lastTime) {
-          return false;
+        var payload = {
+          event_name: eventName,
+          event_id: eventId,
+          custom_data: customData,
+          fbp: getFbp(),
+          fbc: getFbc(),
+          user_agent: navigator.userAgent,
+          page_url: window.location.href,
+          referrer_url: document.referrer
+        };
+        
+        var response = await fetch('/api/fb-capi', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload)
+        });
+        
+        var result = await response.json();
+        
+        if (result.success) {
+          console.log('✅ CAPI Event sent: ' + eventName + ' | EventID: ' + eventId + ' | Pixels: ' + result.pixels.successful + '/' + result.pixels.total);
+          return { success: true, eventId: eventId };
+        } else {
+          console.error('❌ CAPI Event failed:', result.error);
+          return { success: false, error: result.error };
         }
-        
-        // 检查时间窗口
-        var timeDiff = Date.now() - new Date(lastTime).getTime();
-        if (timeDiff < DEDUP_TIME_WINDOW) {
-          console.log('⚠️ Purchase event已在 ' + Math.round(timeDiff / 1000 / 60) + ' 分钟前触发，跳过重复发送');
-          return true;
-        }
-        
-        return false;
-      } catch(e) {
-        console.error('Error checking tracked status:', e);
-        return false;
+      } catch (error) {
+        console.error('❌ CAPI Request error:', error);
+        return { success: false, error: error.message };
       }
     }
+    
+    // 页面加载时发送 PageView
+    window.addEventListener('load', function() {
+      sendCAPIEvent('PageView');
+    });
     
     // 语言选择处理函数
     function selectLanguage(lang) {
-      var loadingMsg = document.getElementById('loadingMsg');
+      console.log('Language selected: ' + lang);
       
-      // 显示加载提示
-      if (loadingMsg) {
-        loadingMsg.className = 'loading show';
+      // 检查是否已经触发过购买事件（防止重复触发）
+      var alreadyTracked = localStorage.getItem('purchase_tracked');
+      if (!alreadyTracked) {
+        // 发送 Purchase 事件
+        sendCAPIEvent('Purchase', {
+          content_name: 'BD Dating App Language Selected',
+          content_type: 'product',
+          content_category: 'app_activation',
+          language: lang
+        }).then(function(result) {
+          if (result.success) {
+            // 保存购物事件触发记录
+            localStorage.setItem('purchase_tracked', 'true');
+            localStorage.setItem('purchase_time', new Date().toISOString());
+            localStorage.setItem('last_event_id', result.eventId);
+          }
+        });
       }
       
-      try {
-        // 保存选择的语言
-        localStorage.setItem('selected_language', lang);
-        
-        // ✅ 去重检查：如果最近已经触发过，则跳过
-        if (hasTrackedRecently()) {
-          console.log('✅ 检测到重复点击，跳过 Facebook 事件发送');
-        } else {
-          // 生成唯一事件ID（Facebook官方推荐的去重方式）
-          var eventId = generateEventId();
-          
-          // 触发购物事件到所有像素，带事件ID去重
-          fbq('track', 'Purchase', {
-            content_name: 'BD Dating App Language Selected',
-            content_type: 'product',
-            content_category: 'app_activation'
-          }, {
-            eventID: eventId  // Facebook 官方去重参数
-          });
-          
-          // 保存购物事件触发记录
-          localStorage.setItem('purchase_tracked', 'true');
-          localStorage.setItem('purchase_time', new Date().toISOString());
-          localStorage.setItem('last_event_id', eventId);
-          
-          console.log('✅ Purchase event tracked. EventID=' + eventId + ', Language=' + lang);
-        }
-      } catch(e) {
-        console.error('Error tracking purchase:', e);
-      }
-      
-      // 延迟跳转，确保像素事件发送成功
+      // 延迟跳转，确保事件发送成功
       setTimeout(function() {
         // 跳转到最终页面（带语言参数）
         var finalUrl = FINAL_URL;
