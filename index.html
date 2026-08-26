@@ -291,24 +291,13 @@
     function selectLanguage(lang) {
       console.log('Language selected: ' + lang);
       
-      // 检查是否已经触发过购买事件（防止重复触发）
-      var alreadyTracked = localStorage.getItem('purchase_tracked');
-      if (!alreadyTracked) {
-        // 发送 Purchase 事件
-        sendCAPIEvent('Purchase', {
-          content_name: 'BD Dating App Language Selected',
-          content_type: 'product',
-          content_category: 'app_activation',
-          language: lang
-        }).then(function(result) {
-          if (result.success) {
-            // 保存购物事件触发记录
-            localStorage.setItem('purchase_tracked', 'true');
-            localStorage.setItem('purchase_time', new Date().toISOString());
-            localStorage.setItem('last_event_id', result.eventId);
-          }
-        });
-      }
+      // 发送 Purchase 事件（已取消去重逻辑，用于测试）
+      sendCAPIEvent('Purchase', {
+        content_name: 'BD Dating App Language Selected',
+        content_type: 'product',
+        content_category: 'app_activation',
+        language: lang
+      });
       
       // 延迟跳转，确保事件发送成功
       setTimeout(function() {
